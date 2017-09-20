@@ -22,7 +22,7 @@ public class Client {
             System.out.println("Conectou!");
             StreamFromServer = cs.getInputStream();
             StreamToServer = cs.getOutputStream();
-            cs.setSoTimeout(500);
+            cs.setSoTimeout(5000);
         } catch (IOException e) {
             System.out.println("Servidor fora do ar.\n Erro: " + e);
             ret = false;
