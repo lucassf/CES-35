@@ -5,85 +5,85 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 
 public class Server {
-    
+
     private static int port = 9090;
     private ServerSocket ss;
     private Socket client;
     private InputStream StreamFromClient;
     private OutputStream StreamToClient;
-	
-	
-    public boolean Conect ()
-    {
+    private Double savings = 2000.0;
+
+    boolean validClient(int id) {
+        return true;
+    }
+
+    public boolean Conect() {
         boolean ret = true;
-        try
-        {
+        try {
             System.out.println("Esperando conexão");
-            ss = new ServerSocket (port);
+            ss = new ServerSocket(port);
             client = ss.accept();
             System.out.println("Conectou!");
             StreamFromClient = client.getInputStream();
             StreamToClient = client.getOutputStream();
             client.setSoTimeout(5000);
-        }
-        catch (IOException e)
-        {
-            System.out.println("Não houve conexão.\n Erro: "+e);
+        } catch (IOException e) {
+            System.out.println("Não houve conexão.\n Erro: " + e);
             ret = false;
         }
         return ret;
     }
 
-    public void ReadMessages()
-    {
+    public void ReadMessages() {
         byte[] request = new byte[1024];
         String message, reply;
-        boolean exit = false;    
-       
-        while (!exit)
-        {
-            try
-            {
+        boolean logged = false;
+        
+        try {
+            while (true) {
                 StreamFromClient.read(request);
-                message = new String (request, "US-ASCII");
+                message = new String(request, "US-ASCII");
                 reply = "Comando nao reconhecido";
-                
-                if (message.contains("login"))
-                {
-                    reply = "login realizado!";
+
+                if (message.contains("login")) {
+                    if (validClient(message.charAt(message.length() - 1) - '0')) {
+                        if (!logged)reply = "login realizado!";
+                        else reply = "Ja conectado!";
+                        logged = true;
+                    } else {
+                        reply = "senha invalida!";
+                    }
+                } else if (message.contains("exit")) {
+                    break;
                 }
-                else if (message.contains("saldo"))
-                {
+                else if (!logged){
+                    reply = "Deve-se conectar antes de realizar a operação!";
+                } 
+                else if (message.contains("saldo")) {
                     reply = "R$1000,00 de saldo";
-                        
-                }
-                else if (message.contains("saque"))
-                {
+
+                } else if (message.contains("saque")) {
                     reply = "saque realizado!";
-                }
-                else if (message.contains("logoff"))
-                {
+                } else if (message.contains("logoff")) {
                     reply = "logged-off!";
-                    exit = true;
+                    logged = false;
                 }
                 StreamToClient.write(reply.getBytes());
+                StreamToClient.flush();
             }
-
-            catch (IOException e)
-            {
-                System.out.println("Erro na comunição com cliente.\n Erro: " + e);
-                break;
-            }
+        } catch (IOException e) {
+            System.out.println("Erro na comunição com cliente.\n Erro: " + e);
         }
+
         System.out.println("Desconectou!");
     }
-    public static void main (String[] args)
-    {
+
+    public static void main(String[] args) {
         Server server = new Server();
-        if (server.Conect())
+        if (server.Conect()) {
             server.ReadMessages();
+        }
     }
 }
