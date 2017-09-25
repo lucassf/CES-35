@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Server {
 
@@ -22,7 +24,7 @@ public class Server {
     public boolean Conect() {
         boolean ret = true;
         try {
-            System.out.println("Esperando conexão");
+            System.out.println("Esperando conexao");
             ss = new ServerSocket(port);
             client = ss.accept();
             System.out.println("Conectou!");
@@ -30,10 +32,19 @@ public class Server {
             StreamToClient = client.getOutputStream();
             client.setSoTimeout(5000);
         } catch (IOException e) {
-            System.out.println("Não houve conexão.\n Erro: " + e);
+            System.out.println("Não houve conexao.\n Erro: " + e);
             ret = false;
         }
         return ret;
+    }
+    
+    private void Disconnect() {
+        try{
+            StreamFromClient.close();
+            StreamToClient.close();
+        } catch (IOException ex) {
+            System.out.println("Erro ao desconectar");
+        }
     }
 
     public void ReadMessages() {
@@ -59,7 +70,7 @@ public class Server {
                     break;
                 }
                 else if (!logged){
-                    reply = "Deve-se conectar antes de realizar a operação!";
+                    reply = "Deve-se conectar antes de realizar a operacao!";
                 } 
                 else if (message.contains("saldo")) {
                     reply = "R$1000,00 de saldo";
@@ -73,8 +84,11 @@ public class Server {
                 StreamToClient.write(reply.getBytes());
                 StreamToClient.flush();
             }
+            reply = "Desconectou";
+            StreamToClient.write(reply.getBytes());
+            StreamToClient.flush();
         } catch (IOException e) {
-            System.out.println("Erro na comunição com cliente.\n Erro: " + e);
+            System.out.println("Erro na comunicao com cliente.\n Erro: " + e);
         }
 
         System.out.println("Desconectou!");
@@ -84,6 +98,11 @@ public class Server {
         Server server = new Server();
         if (server.Conect()) {
             server.ReadMessages();
+            server.Disconnect();
         }
+        System.out.println("Pressione ENTER para sair...");
+        try{
+            System.in.read();
+        }catch(Exception e){}
     }
 }
